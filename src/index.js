@@ -2,8 +2,7 @@ import SlimSelect from 'slim-select'
 import Notiflix from 'notiflix';
 import axios from 'axios';
 const BASE_URL = 'https://api.thecatapi.com/v1';
-const API_KEY =
-  'live_B2dnbVetIbfqrOmkwbIofxL3FcS5ZV6lkYI8KzbOQGJOeY6aDAik0EF6NHEOzNUF    ';
+const API_KEY ='live_B2dnbVetIbfqrOmkwbIofxL3FcS5ZV6lkYI8KzbOQGJOeY6aDAik0EF6NHEOzNUF';
 const refs = {
     select: document.querySelector('.breed-select'),
     loader: document.querySelector('.loader'),
