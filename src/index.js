@@ -1,57 +1,72 @@
-import SlimSelect from 'slim-select'
+import SlimSelect from 'slim-select';
 import Notiflix from 'notiflix';
-import axios from 'axios';
-const BASE_URL = 'https://api.thecatapi.com/v1';
-const API_KEY ='live_B2dnbVetIbfqrOmkwbIofxL3FcS5ZV6lkYI8KzbOQGJOeY6aDAik0EF6NHEOzNUF';
+import { fetchCatsBreed, fetchCatBreed } from './jshelp/cat-api';
+import { createMarkupSelect } from './jshelp/murkup';
+
 const refs = {
-    select: document.querySelector('.breed-select'),
-    loader: document.querySelector('.loader'),
-    error: document.querySelector('.error'),
-    contCatInfo: document.querySelector('.cat-info'),
-  };
+  select: document.querySelector('.breed-select'),
+  loader: document.querySelector('.loader'),
+  error: document.querySelector('.error'),
+  contCatInfo: document.querySelector('.cat-info'),
+};
+
+let isInitialSelection = true;
+
+async function init() {
   refs.loader.classList.replace('loader', 'hidden');
   refs.error.classList.add('hidden');
   refs.contCatInfo.classList.add('hidden');
   refs.select.addEventListener('change', selectBreed);
 
-  let selectArr = [];
-  fetchCatsBreed()
-    .then(data => {
-      data.forEach(element => {
-        selectArr.push({ text: element.name, value: element.id });
-      });
-      new SlimSelect({
-        select: refs.select,
-        data: selectArr,
-      });
-    })
-    .catch(onError);
+  try {
+    const data = await fetchCatsBreed();
+    const selectArr = data.map(element => ({
+      text: element.name,
+      value: element.id,
+    }));
 
-  function selectBreed(evt) {
+    new SlimSelect({
+      select: refs.select,
+      data: selectArr,
+    });
+    isInitialSelection = false; 
+  } catch (error) {
+    onError();
+  }
+}
+
+async function selectBreed(evt) {
+  if (!isInitialSelection) {
     const selectedOptionId = evt.target.value;
+
     refs.loader.classList.replace('hidden', 'loader');
     refs.select.classList.add('hidden');
     refs.contCatInfo.classList.add('hidden');
 
-    fetchCatBreed(selectedOptionId)
-      .then(data => {
-        refs.loader.classList.replace('loader', 'hidden');
-        refs.select.classList.remove('hidden');
+    try {
+      const data = await fetchCatBreed(selectedOptionId);
 
-        const { url, breeds } = data[0];
+      refs.loader.classList.replace('loader', 'hidden');
+      refs.select.classList.remove('hidden');
 
-        refs.contCatInfo.innerHTML = `<div class="box-img">
-      <img src="${url}" alt="${breeds[0].name}" width="400"/>
-      </div>
-      <div class="box">
-      <h1>${breeds[0].name}</h1>
-      <p>${breeds[0].description}</p>
-      <p class="name-temp">Temperament: <span class="text-temp">${breeds[0].temperament}</span></p>
-      </div>`;
-        refs.contCatInfo.classList.remove('hidden');
-      })
-      .catch(onError);
+      const { url, breeds } = data[0];
+
+      refs.contCatInfo.innerHTML = `<div class="box-img">
+        <img src="${url}" alt="${breeds[0].name}" width="400"/>
+        </div>
+        <div class="box">
+        <h1>${breeds[0].name}</h1>
+        <p>${breeds[0].description}</p>
+        <p class="name-temp">Temperament: <span class="text-temp">${breeds[0].temperament}</span></p>
+        </div>`;
+
+      refs.contCatInfo.classList.remove('hidden');
+    } catch (error) {
+      onError();
+    }
   }
+}
+
 function onError() {
   refs.select.classList.remove('hidden');
   refs.loader.classList.replace('loader', 'hidden');
@@ -66,19 +81,5 @@ function onError() {
     }
   );
 }
-function fetchCatsBreed() {
-  return axios
-    .get(`${BASE_URL}/breeds?api_key=${API_KEY}`)
-    .then(({ data }) => data);
-}
 
-function fetchCatBreed(breedId) {
-  return axios
-    .get(`${BASE_URL}/images/search?api_key=${API_KEY}&breed_ids=${breedId}`)
-    .then(({ data }) => data);
-}
-function createMarkupSelect(arr) {
-  return arr
-    .map(({ id, name }) => `<option value="${id}">${name}</option>`)
-    .join('');
-}
+document.addEventListener('DOMContentLoaded', init);
